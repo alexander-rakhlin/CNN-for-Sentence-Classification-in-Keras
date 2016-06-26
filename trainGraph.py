@@ -53,7 +53,7 @@ np.random.seed(2)
 # Parameters
 # ==================================================
 #
-# Model Variations. See Kim Yoon’s Convolutional Neural Networks for 
+# Model Variations. See Kim Yoon's Convolutional Neural Networks for 
 # Sentence Classification, Section 3 for detail.
 
 model_variation = 'CNN-rand'  #  CNN-rand | CNN-non-static | CNN-static
