@@ -136,10 +136,9 @@ model.add(Dropout(dropout_prob[1]))
 model.add(Activation('relu'))
 model.add(Dense(1))
 model.add(Activation('sigmoid'))
-model.compile(loss='binary_crossentropy', optimizer='rmsprop', class_mode='binary')
+model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
 
 # Training model
 # ==================================================
 model.fit(x_shuffled, y_shuffled, batch_size=batch_size,
-          nb_epoch=num_epochs, show_accuracy=True,
-          validation_split=val_split, verbose=2)
+          nb_epoch=num_epochs, validation_split=val_split, verbose=2)
