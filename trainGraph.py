@@ -43,17 +43,15 @@ import numpy as np
 import data_helpers
 from w2v import train_word2vec
 
-from keras.models import Sequential, Graph
-from keras.layers.core import Dense, Dropout, Activation, Flatten
-from keras.layers.embeddings import Embedding
-from keras.layers.convolutional import Convolution1D, MaxPooling1D
+from keras.models import Sequential, Model
+from keras.layers import Activation, Dense, Dropout, Embedding, Flatten, Input, Merge, Convolution1D, MaxPooling1D
 
 np.random.seed(2)
 
 # Parameters
 # ==================================================
 #
-# Model Variations. See Kim Yoon’s Convolutional Neural Networks for 
+# Model Variations. See Kim Yoon's Convolutional Neural Networks for 
 # Sentence Classification, Section 3 for detail.
 
 model_variation = 'CNN-rand'  #  CNN-rand | CNN-non-static | CNN-static
@@ -104,25 +102,24 @@ print("Vocabulary Size: {:d}".format(len(vocabulary)))
 #
 # graph subnet with one input and one output,
 # convolutional layers concateneted in parallel
-graph = Graph()
-graph.add_input(name='input', input_shape=(sequence_length, embedding_dim))
+graph_in = Input(shape=(sequence_length, embedding_dim))
+convs = []
 for fsz in filter_sizes:
     conv = Convolution1D(nb_filter=num_filters,
                          filter_length=fsz,
                          border_mode='valid',
                          activation='relu',
-                         subsample_length=1)
-    pool = MaxPooling1D(pool_length=2)
-    graph.add_node(conv, name='conv-%s' % fsz, input='input')
-    graph.add_node(pool, name='maxpool-%s' % fsz, input='conv-%s' % fsz)
-    graph.add_node(Flatten(), name='flatten-%s' % fsz, input='maxpool-%s' % fsz)
-
+                         subsample_length=1)(graph_in)
+    pool = MaxPooling1D(pool_length=2)(conv)
+    flatten = Flatten()(pool)
+    convs.append(flatten)
+    
 if len(filter_sizes)>1:
-    graph.add_output(name='output',
-                     inputs=['flatten-%s' % fsz for fsz in filter_sizes],
-                     merge_mode='concat')
-else:                 
-    graph.add_output(name='output', input='flatten-%s' % filter_sizes[0])
+    out = Merge(mode='concat')(convs)
+else:
+    out = convs[0]
+
+graph = Model(input=graph_in, output=out)
 
 # main sequential model
 model = Sequential()
@@ -136,10 +133,9 @@ model.add(Dropout(dropout_prob[1]))
 model.add(Activation('relu'))
 model.add(Dense(1))
 model.add(Activation('sigmoid'))
-model.compile(loss='binary_crossentropy', optimizer='rmsprop', class_mode='binary')
+model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
 
 # Training model
 # ==================================================
 model.fit(x_shuffled, y_shuffled, batch_size=batch_size,
-          nb_epoch=num_epochs, show_accuracy=True,
-          validation_split=val_split, verbose=2)
+          nb_epoch=num_epochs, validation_split=val_split, verbose=2)
