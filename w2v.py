@@ -22,14 +22,14 @@ def train_word2vec(sentence_matrix, vocabulary_inv,
     model_name = join(model_dir, model_name)
     if exists(model_name):
         embedding_model = word2vec.Word2Vec.load(model_name)
-        print 'Loading existing Word2Vec model \'%s\'' % split(model_name)[-1]
+        print('Loading existing Word2Vec model \'%s\'' % split(model_name)[-1])
     else:
         # Set values for various parameters
         num_workers = 2       # Number of threads to run in parallel
         downsampling = 1e-3   # Downsample setting for frequent words
         
         # Initialize and train the model
-        print "Training Word2Vec model..."
+        print('Training Word2Vec model...')
         sentences = [[vocabulary_inv[w] for w in s] for s in sentence_matrix]
         embedding_model = word2vec.Word2Vec(sentences, workers=num_workers, \
                             size=num_features, min_count = min_word_count, \
@@ -42,7 +42,7 @@ def train_word2vec(sentence_matrix, vocabulary_inv,
         # Saving the model for later use. You can load it later using Word2Vec.load()
         if not exists(model_dir):
             os.mkdir(model_dir)
-        print 'Saving Word2Vec model \'%s\'' % split(model_name)[-1]
+        print('Saving Word2Vec model \'%s\'' % split(model_name)[-1])
         embedding_model.save(model_name)
     
     #  add unknown words
