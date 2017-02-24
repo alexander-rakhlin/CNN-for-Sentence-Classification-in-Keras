@@ -1,3 +1,4 @@
+from __future__ import print_function
 from gensim.models import word2vec
 from os.path import join, exists, split
 import os

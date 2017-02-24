@@ -3,11 +3,11 @@ Train convolutional network for sentiment analysis. Based on
 "Convolutional Neural Networks for Sentence Classification" by Yoon Kim
 http://arxiv.org/pdf/1408.5882v2.pdf
 
-For 'CNN-non-static' gets to 82.1% after 61 epochs with following settings:
+For 'CNN-non-static' gets to 82.1% after 24 epochs with following settings:
 embedding_dim = 20          
 filter_sizes = (3, 4)
 num_filters = 3
-dropout_prob = (0.7, 0.8)
+dropout_prob = (0.25, 0.5)
 hidden_dims = 100
 
 For 'CNN-rand' gets to 78-79% after 7-8 epochs with following settings:
@@ -39,12 +39,14 @@ achieve performance reported in the article (81.6%)
 instead of MaxPooling over whole feature map as in the article
 """
 
+from __future__ import print_function
 import numpy as np
 import data_helpers
 from w2v import train_word2vec
 
 from keras.models import Sequential, Model
 from keras.layers import Activation, Dense, Dropout, Embedding, Flatten, Input, Merge, Convolution1D, MaxPooling1D
+from keras.optimizers import SGD
 
 np.random.seed(2)
 
@@ -54,16 +56,16 @@ np.random.seed(2)
 # Model Variations. See Kim Yoon's Convolutional Neural Networks for 
 # Sentence Classification, Section 3 for detail.
 
-model_variation = 'CNN-rand'  #  CNN-rand | CNN-non-static | CNN-static
+model_variation = 'CNN-non-static'  #  CNN-rand | CNN-non-static | CNN-static
 print('Model variation is %s' % model_variation)
 
 # Model Hyperparameters
 sequence_length = 56
 embedding_dim = 20          
 filter_sizes = (3, 4)
-num_filters = 150
+num_filters = 3
 dropout_prob = (0.25, 0.5)
-hidden_dims = 150
+hidden_dims = 100
 
 # Training parameters
 batch_size = 32
@@ -133,7 +135,8 @@ model.add(Dropout(dropout_prob[1]))
 model.add(Activation('relu'))
 model.add(Dense(1))
 model.add(Activation('sigmoid'))
-model.compile(loss='binary_crossentropy', optimizer='rmsprop', metrics=['accuracy'])
+opt = SGD(lr=0.01, momentum=0.80, decay=1e-6, nesterov=True)
+model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
 
 # Training model
 # ==================================================
