@@ -142,3 +142,19 @@ model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
 # ==================================================
 model.fit(x_shuffled, y_shuffled, batch_size=batch_size,
           nb_epoch=num_epochs, validation_split=val_split, verbose=2)
+
+# Prediction
+your_sentence = "I'm so happy"
+processed_sentence = data_helpers.clean_str(your_sentence).split(" ")
+num_padding = sequence_length - len(processed_sentence)
+new_sentence = processed_sentence + ["<PAD/>"] * num_padding
+
+v_list = []
+for word in new_sentence:
+    v_list.append(vocabulary[word])
+p1 = np.asarray(v_list)
+probs = model.predict(p1.reshape(1, 56))
+if probs > 0.5:
+    print("Positive")
+else:
+    print("Negative")
