@@ -18,7 +18,7 @@ def train_word2vec(sentence_matrix, vocabulary_inv,
     min_word_count  # Minimum word count                        
     context         # Context window size 
     """
-    model_dir = 'word2vec_models'
+    model_dir = 'models'
     model_name = "{:d}features_{:d}minwords_{:d}context".format(num_features, min_word_count, context)
     model_name = join(model_dir, model_name)
     if exists(model_name):

@@ -52,28 +52,6 @@ from keras.layers import Activation, Dense, Dropout, Embedding, Flatten, Input, 
 from keras.optimizers import SGD
 
 
-def prediction(your_sentence="I'm sad"):
-    """
-    Prediction
-    :param your_sentence: the sentence to predict
-    :return: predict fload value
-    """
-    processed_sentence = data_helpers.clean_str(your_sentence).split(" ")
-    num_padding = sequence_length - len(processed_sentence)
-    new_sentence = processed_sentence + ["<PAD/>"] * num_padding
-
-    v_list = []
-    for word in new_sentence:
-        v_list.append(vocabulary[word])
-    p1 = np.asarray(v_list)
-    probs = model.predict(p1.reshape(1, 56))
-    if probs > 0.5:
-        print("Positive")
-    else:
-        print("Negative")
-    return probs
-
-
 np.random.seed(2)
 
 # Parameters
@@ -102,7 +80,9 @@ val_split = 0.1
 min_word_count = 1  # Minimum word count                        
 context = 10  # Context window size
 ACTION = "predict"
-weights_file = "weights_file"
+weights_file = "models/weights_file"
+
+sentence = "exhilarating, funny and fun."
 
 # Data Preparatopn
 # ==================================================
@@ -166,17 +146,36 @@ model.add(Activation('sigmoid'))
 opt = SGD(lr=0.01, momentum=0.80, decay=1e-6, nesterov=True)
 model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
 
-if ACTION == "predict":
-    if os.path.exists(weights_file):
-        prediction(your_sentence="I'm happy")
-    else:
-        model.fit(x_shuffled, y_shuffled, batch_size=batch_size,
-                  nb_epoch=num_epochs, validation_split=val_split, verbose=2)
-        print("dumping weights to file...")
-        model.save_weights("weights_file", overwrite=True)
-        prediction(your_sentence="I'm happy")
+# Training the model
+if ACTION == "predict" and os.path.exists(weights_file):
+        model.load_weights(weights_file)
 else:
-    # Training model
-    # ==================================================
     model.fit(x_shuffled, y_shuffled, batch_size=batch_size,
               nb_epoch=num_epochs, validation_split=val_split, verbose=2)
+    print("dumping weights to file...")
+    model.save_weights(weights_file, overwrite=True)
+
+
+def format_sentence(vocabulary, sequence_length, your_sentence="I'm sad"):
+    """
+    Prediction
+    :vocabulary: vocabulary
+    :sequence_length: sequence length
+    :param your_sentence: the sentence to predict
+    :return: formatted sentence as np.asarray
+    """
+    processed_sentence = data_helpers.clean_str(your_sentence).split(" ")
+    num_padding = sequence_length - len(processed_sentence)
+    new_sentence = processed_sentence + ["<PAD/>"] * num_padding
+
+    v_list = np.hstack([vocabulary[word] for word in new_sentence])
+
+    return v_list.reshape(1, -1)
+
+# Predicting the model
+if ACTION == "predict":
+    v_list = format_sentence(vocabulary, sequence_length, your_sentence=sentence)
+    probs = model.predict(v_list)
+    
+    mood = "Negative" if probs < 0.5 else "Positive"
+    print(sentence, "\nis", mood, "sentence")
