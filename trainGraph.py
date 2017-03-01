@@ -40,6 +40,9 @@ instead of MaxPooling over whole feature map as in the article
 """
 
 from __future__ import print_function
+
+import os
+
 import numpy as np
 import data_helpers
 from w2v import train_word2vec
@@ -47,6 +50,29 @@ from w2v import train_word2vec
 from keras.models import Sequential, Model
 from keras.layers import Activation, Dense, Dropout, Embedding, Flatten, Input, Merge, Convolution1D, MaxPooling1D
 from keras.optimizers import SGD
+
+
+def prediction(your_sentence="I'm sad"):
+    """
+    Prediction
+    :param your_sentence: the sentence to predict
+    :return: predict fload value
+    """
+    processed_sentence = data_helpers.clean_str(your_sentence).split(" ")
+    num_padding = sequence_length - len(processed_sentence)
+    new_sentence = processed_sentence + ["<PAD/>"] * num_padding
+
+    v_list = []
+    for word in new_sentence:
+        v_list.append(vocabulary[word])
+    p1 = np.asarray(v_list)
+    probs = model.predict(p1.reshape(1, 56))
+    if probs > 0.5:
+        print("Positive")
+    else:
+        print("Negative")
+    return probs
+
 
 np.random.seed(2)
 
@@ -75,6 +101,8 @@ val_split = 0.1
 # Word2Vec parameters, see train_word2vec
 min_word_count = 1  # Minimum word count                        
 context = 10  # Context window size
+ACTION = "predict"
+weights_file = "weights_file"
 
 # Data Preparatopn
 # ==================================================
@@ -138,30 +166,17 @@ model.add(Activation('sigmoid'))
 opt = SGD(lr=0.01, momentum=0.80, decay=1e-6, nesterov=True)
 model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
 
-ACTION = "predict"
-
-if ACTION == "train":
+if ACTION == "predict":
+    if os.path.exists(weights_file):
+        prediction(your_sentence="I'm happy")
+    else:
+        model.fit(x_shuffled, y_shuffled, batch_size=batch_size,
+                  nb_epoch=num_epochs, validation_split=val_split, verbose=2)
+        print("dumping weights to file...")
+        model.save_weights("weights_file", overwrite=True)
+        prediction(your_sentence="I'm happy")
+else:
     # Training model
     # ==================================================
     model.fit(x_shuffled, y_shuffled, batch_size=batch_size,
               nb_epoch=num_epochs, validation_split=val_split, verbose=2)
-
-else:
-    print("dumping weights to file...")
-    model.save_weights("weights_file", overwrite=True)
-
-# Prediction
-your_sentence = "I'm sad"
-processed_sentence = data_helpers.clean_str(your_sentence).split(" ")
-num_padding = sequence_length - len(processed_sentence)
-new_sentence = processed_sentence + ["<PAD/>"] * num_padding
-
-v_list = []
-for word in new_sentence:
-    v_list.append(vocabulary[word])
-p1 = np.asarray(v_list)
-probs = model.predict(p1.reshape(1, 56))
-if probs > 0.5:
-    print("Positive")
-else:
-    print("Negative")
