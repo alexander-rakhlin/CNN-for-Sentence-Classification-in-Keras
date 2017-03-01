@@ -2,9 +2,11 @@ import numpy as np
 import re
 import itertools
 from collections import Counter
+
 """
 Original taken from https://github.com/dennybritz/cnn-text-classification-tf
 """
+
 
 def clean_str(string):
     """
@@ -105,7 +107,7 @@ def batch_iter(data, batch_size, num_epochs):
     """
     data = np.array(data)
     data_size = len(data)
-    num_batches_per_epoch = int(len(data)/batch_size) + 1
+    num_batches_per_epoch = int(len(data) / batch_size) + 1
     for epoch in range(num_epochs):
         # Shuffle the data at each epoch
         shuffle_indices = np.random.permutation(np.arange(data_size))

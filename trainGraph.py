@@ -56,12 +56,12 @@ np.random.seed(2)
 # Model Variations. See Kim Yoon's Convolutional Neural Networks for 
 # Sentence Classification, Section 3 for detail.
 
-model_variation = 'CNN-non-static'  #  CNN-rand | CNN-non-static | CNN-static
+model_variation = 'CNN-non-static'  # CNN-rand | CNN-non-static | CNN-static
 print('Model variation is %s' % model_variation)
 
 # Model Hyperparameters
 sequence_length = 56
-embedding_dim = 20          
+embedding_dim = 20
 filter_sizes = (3, 4)
 num_filters = 3
 dropout_prob = (0.25, 0.5)
@@ -74,7 +74,7 @@ val_split = 0.1
 
 # Word2Vec parameters, see train_word2vec
 min_word_count = 1  # Minimum word count                        
-context = 10        # Context window size    
+context = 10  # Context window size
 
 # Data Preparatopn
 # ==================================================
@@ -83,14 +83,14 @@ context = 10        # Context window size
 print("Loading data...")
 x, y, vocabulary, vocabulary_inv = data_helpers.load_data()
 
-if model_variation=='CNN-non-static' or model_variation=='CNN-static':
+if model_variation == 'CNN-non-static' or model_variation == 'CNN-static':
     embedding_weights = train_word2vec(x, vocabulary_inv, embedding_dim, min_word_count, context)
-    if model_variation=='CNN-static':
+    if model_variation == 'CNN-static':
         x = embedding_weights[0][x]
-elif model_variation=='CNN-rand':
+elif model_variation == 'CNN-rand':
     embedding_weights = None
 else:
-    raise ValueError('Unknown model variation')    
+    raise ValueError('Unknown model variation')
 
 # Shuffle data
 shuffle_indices = np.random.permutation(np.arange(len(y)))
@@ -115,8 +115,8 @@ for fsz in filter_sizes:
     pool = MaxPooling1D(pool_length=2)(conv)
     flatten = Flatten()(pool)
     convs.append(flatten)
-    
-if len(filter_sizes)>1:
+
+if len(filter_sizes) > 1:
     out = Merge(mode='concat')(convs)
 else:
     out = convs[0]
@@ -125,7 +125,7 @@ graph = Model(input=graph_in, output=out)
 
 # main sequential model
 model = Sequential()
-if not model_variation=='CNN-static':
+if not model_variation == 'CNN-static':
     model.add(Embedding(len(vocabulary), embedding_dim, input_length=sequence_length,
                         weights=embedding_weights))
 model.add(Dropout(dropout_prob[0], input_shape=(sequence_length, embedding_dim)))
@@ -138,13 +138,20 @@ model.add(Activation('sigmoid'))
 opt = SGD(lr=0.01, momentum=0.80, decay=1e-6, nesterov=True)
 model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
 
-# Training model
-# ==================================================
-model.fit(x_shuffled, y_shuffled, batch_size=batch_size,
-          nb_epoch=num_epochs, validation_split=val_split, verbose=2)
+ACTION = "predict"
+
+if ACTION == "train":
+    # Training model
+    # ==================================================
+    model.fit(x_shuffled, y_shuffled, batch_size=batch_size,
+              nb_epoch=num_epochs, validation_split=val_split, verbose=2)
+
+else:
+    print("dumping weights to file...")
+    model.save_weights("weights_file", overwrite=True)
 
 # Prediction
-your_sentence = "I'm so happy"
+your_sentence = "I'm sad"
 processed_sentence = data_helpers.clean_str(your_sentence).split(" ")
 num_padding = sequence_length - len(processed_sentence)
 new_sentence = processed_sentence + ["<PAD/>"] * num_padding
