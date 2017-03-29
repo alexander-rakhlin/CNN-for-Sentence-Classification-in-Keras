@@ -23,7 +23,7 @@ def train_word2vec(sentence_matrix, vocabulary_inv,
     model_name = join(model_dir, model_name)
     if exists(model_name):
         embedding_model = word2vec.Word2Vec.load(model_name)
-        print('Loading existing Word2Vec model \'%s\'' % split(model_name)[-1])
+        print('Load existing Word2Vec model \'%s\'' % split(model_name)[-1])
     else:
         # Set values for various parameters
         num_workers = 2  # Number of threads to run in parallel
@@ -32,8 +32,8 @@ def train_word2vec(sentence_matrix, vocabulary_inv,
         # Initialize and train the model
         print('Training Word2Vec model...')
         sentences = [[vocabulary_inv[w] for w in s] for s in sentence_matrix]
-        embedding_model = word2vec.Word2Vec(sentences, workers=num_workers, \
-                                            size=num_features, min_count=min_word_count, \
+        embedding_model = word2vec.Word2Vec(sentences, workers=num_workers,
+                                            size=num_features, min_count=min_word_count,
                                             window=context, sample=downsampling)
 
         # If we don't plan to train the model any further, calling 
@@ -47,8 +47,8 @@ def train_word2vec(sentence_matrix, vocabulary_inv,
         embedding_model.save(model_name)
 
     # add unknown words
-    embedding_weights = [np.array([embedding_model[w] if w in embedding_model \
-                                       else np.random.uniform(-0.25, 0.25, embedding_model.vector_size) \
+    embedding_weights = [np.array([embedding_model[w] if w in embedding_model
+                                   else np.random.uniform(-0.25, 0.25, embedding_model.vector_size)
                                    for w in vocabulary_inv])]
     return embedding_weights
 

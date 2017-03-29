@@ -1,17 +1,15 @@
 # Convolutional Neural Networks for Sentence Classification
 
-Train convolutional network for sentiment analysis. Based on "Convolutional Neural Networks for Sentence Classification" by Yoon Kim, [link](http://arxiv.org/pdf/1408.5882v2.pdf). Inspired by Denny Britz article "Implementing a CNN for Text Classification in TensorFlow", [link](http://www.wildml.com/2015/12/implementing-a-cnn-for-text-classification-in-tensorflow/). 
+Train convolutional network for sentiment analysis. Based on "Convolutional Neural Networks for Sentence Classification" by Yoon Kim, [link](http://arxiv.org/pdf/1408.5882v2.pdf). Inspired by Denny Britz article "Implementing a CNN for Text Classification in TensorFlow", [link](http://www.wildml.com/2015/12/implementing-a-cnn-for-text-classification-in-tensorflow/).
+"CNN-rand" and "CNN-non-static" models get to 88-90%
 
-## Some thoughts
-
-It turns out that such a small data set as "Movie reviews with one sentence per review" (Pang and Lee, 2005) requires much smaller network than the one introduced in the original article: 
-* embedding dimension is only 20 (instead of 300; 'CNN-static' still requires ~100 dimensions as it has much fewer trainable weights)
-* 2 filter sizes (instead of 3)
-* higher dropout probabilities and
-* 3 filters per filter size is enough for 'CNN-non-static' (instead of 100)
-* embedding initialization does not require prebuilt Google Word2Vec data. Training Word2Vec on the same "Movie reviews" data set is enough to achieve performance reported in the article (81.6%) 
-
-Another distinct difference is slidind MaxPooling window of length=2 instead of MaxPooling over whole feature map as in the article 
+## Some difference from original article:
+* larger IMDB corpus, longer sentences; sentence length is very important, just like data size
+* smaller embedding dimension, 20 instead of 300
+* 2 filter sizes instead of original 3
+* much fewer filters; experiments show that 3-10 is enough; original work uses 100
+* random initialization is no worse than word2vec init on IMDB corpus
+* sliding Max Pooling instead of original Global Pooling
 
 ## Dependencies
 
