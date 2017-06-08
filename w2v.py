@@ -13,7 +13,7 @@ def train_word2vec(sentence_matrix, vocabulary_inv,
    
     inputs:
     sentence_matrix # int matrix: num_sentences x max_sentence_len
-    vocabulary_inv  # list of words
+    vocabulary_inv  # dict {int: str}
     num_features    # Word vector dimensionality                      
     min_word_count  # Minimum word count                        
     context         # Context window size 
@@ -47,9 +47,9 @@ def train_word2vec(sentence_matrix, vocabulary_inv,
         embedding_model.save(model_name)
 
     # add unknown words
-    embedding_weights = [np.array([embedding_model[w] if w in embedding_model
-                                   else np.random.uniform(-0.25, 0.25, embedding_model.vector_size)
-                                   for w in vocabulary_inv])]
+    embedding_weights = {key: embedding_model[word] if word in embedding_model else
+                              np.random.uniform(-0.25, 0.25, embedding_model.vector_size)
+                         for key, word in vocabulary_inv.items()}
     return embedding_weights
 
 
