@@ -1,7 +1,7 @@
 # Convolutional Neural Networks for Sentence Classification
 
 Train convolutional network for sentiment analysis. Based on "Convolutional Neural Networks for Sentence Classification" by Yoon Kim, [link](http://arxiv.org/pdf/1408.5882v2.pdf). Inspired by Denny Britz article "Implementing a CNN for Text Classification in TensorFlow", [link](http://www.wildml.com/2015/12/implementing-a-cnn-for-text-classification-in-tensorflow/).
-"CNN-rand" and "CNN-non-static" models get to 88-90%
+For "CNN-rand" and "CNN-non-static" gets to 88-90%, and "CNN-static" - 85%
 
 ## Some difference from original article:
 * larger IMDB corpus, longer sentences; sentence length is very important, just like data size
