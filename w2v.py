@@ -57,5 +57,6 @@ if __name__ == '__main__':
     import data_helpers
 
     print("Loading data...")
-    x, _, _, vocabulary_inv = data_helpers.load_data()
+    x, _, _, vocabulary_inv_list = data_helpers.load_data()
+    vocabulary_inv = {key: value for key, value in enumerate(vocabulary_inv_list)}
     w = train_word2vec(x, vocabulary_inv)
