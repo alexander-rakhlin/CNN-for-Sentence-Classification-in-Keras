@@ -32,7 +32,6 @@ reviews_df['Review_Tidy'] = reviews_df['Review_Tidy'].apply(
 
 # Combining title and review
 reviews_df["Review_Tidy"] = reviews_df["Title"].map(str) + " " + reviews_df["Review_Tidy"]
-print(reviews_df.head())
 
 # Lementizing
 # https://pythonprogramming.net/lemmatizing-nltk-tutorial/
@@ -53,28 +52,23 @@ for review in reviews_df['Review_Tidy']:
         word = re.sub(r'(.)\1+', r'\1\1', word)
 
 # Covert to lowercase
+print("Converting words to lowercase...")
 reviews_df['Review_Tidy'] = reviews_df['Review_Tidy'].str.lower()
 
-# Fix misspelled Characters
+# Fix misspelled Words
+print("Fixing misspelled words")
 from spellchecker import SpellChecker
-
 spell = SpellChecker()
-
-# find those words that may be misspelled
 # https://github.com/barrust/pyspellchecker
 for review in reviews_df['Review_Tidy']:
     for word in review:
-        # Get the one `most likely` answer
-        # print(spell.correction(word))
         word = spell.correction(word)
-
-        # Get a list of `likely` options
-        # print(spell.candidates(word))
 
 print(reviews_df.head())
 pos_reviews = []
 neg_reviews = []
 
+print("Creating Pos and Neg Lists...")
 for index, review in reviews_df.iterrows():
     if review[5] >= 3:
         pos_reviews.append(review['Review_Tidy'] + '\n')

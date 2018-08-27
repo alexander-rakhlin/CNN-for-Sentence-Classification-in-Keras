@@ -20,14 +20,13 @@ Differences from original article:
 """
 
 import numpy as np
-import data_helpers
-from w2v import train_word2vec
-
-from keras.models import Sequential, Model
-from keras.layers import Dense, Dropout, Flatten, Input, MaxPooling1D, Convolution1D, Embedding
-from keras.layers.merge import Concatenate
 from keras.datasets import imdb
 from keras.preprocessing import sequence
+from keras.wrappers.scikit_learn import KerasClassifier
+from sklearn.model_selection import GridSearchCV
+
+from TextCNN import create_model
+
 np.random.seed(0)
 
 # ---------------------- Parameters section -------------------
@@ -46,18 +45,22 @@ dropout_prob = (0.5, 0.8)
 hidden_dims = 50
 
 # Training parameters
-batch_size = 64
-num_epochs = 10
+batch_size = 10
+num_epochs = 50
 
 # Prepossessing parameters
-sequence_length = 400
+sequence_length = 100
 max_words = 5000
 
 # Word2Vec parameters (see train_word2vec)
 min_word_count = 1
 context = 10
 
-#
+model_name_s = 'CNN-Better-Data'
+model_load = False
+grid_search = True
+
+
 # ---------------------- Parameters end -----------------------
 
 
@@ -74,7 +77,8 @@ def load_data(data_source):
         vocabulary_inv = dict((v, k) for k, v in vocabulary.items())
         vocabulary_inv[0] = "<PAD/>"
     else:
-        x, y, vocabulary, vocabulary_inv_list = data_helpers.load_data()
+        from data_helpers import load_data
+        x, y, vocabulary, vocabulary_inv_list = load_data()
         vocabulary_inv = {key: value for key, value in enumerate(vocabulary_inv_list)}
         y = y.argmax(axis=1)
 
@@ -91,77 +95,97 @@ def load_data(data_source):
     return x_train, y_train, x_test, y_test, vocabulary_inv
 
 
-# Data Preparation
-print("Load data...")
-x_train, y_train, x_test, y_test, vocabulary_inv = load_data(data_source)
+def perform_grid_search(x_train, y_train, x_test, y_test, vocabulary_inv):
+    import sys
+    old_stdout = sys.stdout
 
-if sequence_length != x_test.shape[1]:
-    print("Adjusting sequence length for actual size")
-    sequence_length = x_test.shape[1]
+    from datetime import datetime
+    log_file = open("grid_search" + datetime.now() + ".log", "w")
 
-print("x_train shape:", x_train.shape)
-print("x_test shape:", x_test.shape)
-print("Vocabulary Size: {:d}".format(len(vocabulary_inv)))
+    sys.stdout = log_file
+    global model, batch_size
+    model = KerasClassifier(build_fn=create_model,
+                            x_train=x_train, x_test=x_test,
+                            vocabulary_inv=vocabulary_inv,
+                            model_type=model_type,
+                            embedding_dim=embedding_dim,
+                            min_word_count=min_word_count,
+                            context=context,
+                            sequence_length=sequence_length,
+                            dropout_prob=dropout_prob,
+                            filter_sizes=filter_sizes,
+                            num_filters=num_filters,
+                            hidden_dims=hidden_dims)
+    # define the grid search parameters
+    batch_size = [10, 20, 30]
+    epochs = [30, 50, ]
+    optimizer = ['RMSprop', 'Adagrad', 'Adam', 'Adamax']
+    param_grid = dict(batch_size=batch_size, epochs=epochs, optimizer=optimizer)
+    grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=2, verbose=10)
+    # grid = GridSearch(model=model,num_threads=1)
+    grid_result = grid.fit(x_train, y_train)
+    print(grid_result)
+    print('Test Score for Optimized Parameters:', grid.score(x_test, y_test))
+    # summarize results
+    print("Best: %f using %s" % (grid_result.best_score_, grid_result.best_params_))
+    means = grid_result.cv_results_['mean_test_score']
+    stds = grid_result.cv_results_['std_test_score']
+    params = grid_result.cv_results_['params']
+    for mean, stdev, param in zip(means, stds, params):
+        print("%f (%f) with: %r" % (mean, stdev, param))
 
-# Prepare embedding layer weights and convert inputs for static model
-print("Model type is", model_type)
-if model_type in ["CNN-non-static", "CNN-static"]:
-    embedding_weights = train_word2vec(np.vstack((x_train, x_test)), vocabulary_inv, num_features=embedding_dim,
-                                       min_word_count=min_word_count, context=context)
-    if model_type == "CNN-static":
-        x_train = np.stack([np.stack([embedding_weights[word] for word in sentence]) for sentence in x_train])
-        x_test = np.stack([np.stack([embedding_weights[word] for word in sentence]) for sentence in x_test])
-        print("x_train static shape:", x_train.shape)
-        print("x_test static shape:", x_test.shape)
+    sys.stdout = old_stdout
+    log_file.close()
 
-elif model_type == "CNN-rand":
-    embedding_weights = None
-else:
-    raise ValueError("Unknown model type")
 
-# Build model
-if model_type == "CNN-static":
-    input_shape = (sequence_length, embedding_dim)
-else:
-    input_shape = (sequence_length,)
+if __name__ == '__main__':
+    # Data Preparation
+    print("Load data...")
+    x_train, y_train, x_test, y_test, vocabulary_inv = load_data(data_source)
 
-model_input = Input(shape=input_shape)
+    if sequence_length != x_test.shape[1]:
+        print("Adjusting sequence length for actual size")
+        sequence_length = x_test.shape[1]
 
-# Static model does not have embedding layer
-if model_type == "CNN-static":
-    z = model_input
-else:
-    z = Embedding(len(vocabulary_inv), embedding_dim, input_length=sequence_length, name="embedding")(model_input)
+    print("x_train shape:", x_train.shape)
+    print("x_test shape:", x_test.shape)
+    print("Vocabulary Size: {:d}".format(len(vocabulary_inv)))
 
-z = Dropout(dropout_prob[0])(z)
+    model = create_model(x_train=x_train, x_test=x_test,
+                         vocabulary_inv=vocabulary_inv,
+                         model_type=model_type,
+                         embedding_dim=embedding_dim,
+                         min_word_count=min_word_count,
+                         context=context,
+                         sequence_length=sequence_length,
+                         dropout_prob=dropout_prob,
+                         filter_sizes=filter_sizes,
+                         num_filters=num_filters,
+                         hidden_dims=hidden_dims)
+    if model_load:
+        model.load_weights(model_name_s)
+    else:
 
-# Convolutional block
-conv_blocks = []
-for sz in filter_sizes:
-    conv = Convolution1D(filters=num_filters,
-                         kernel_size=sz,
-                         padding="valid",
-                         activation="relu",
-                         strides=1)(z)
-    conv = MaxPooling1D(pool_size=2)(conv)
-    conv = Flatten()(conv)
-    conv_blocks.append(conv)
-z = Concatenate()(conv_blocks) if len(conv_blocks) > 1 else conv_blocks[0]
+        if grid_search:
+            print("Grid Searching...")
+            perform_grid_search(x_train=x_train, y_train=y_train,
+                                x_test=x_test, y_test=y_test,
+                                vocabulary_inv=vocabulary_inv)
+        else:
+            print("Training Model...")
+            model.fit(x_train, y_train, batch_size=batch_size, epochs=num_epochs,
+                      validation_data=(x_test, y_test), verbose=10)
 
-z = Dropout(dropout_prob[1])(z)
-z = Dense(hidden_dims, activation="relu")(z)
-model_output = Dense(1, activation="sigmoid")(z)
+    predictions = model.predict(x_test)
+    i = 0
+    y_pred = []
+    for prediction in predictions:
+        if prediction[0] >= 0.75:
+            y_pred.append(1)
+        else:
+            y_pred.append(0)
 
-model = Model(model_input, model_output)
-model.compile(loss="binary_crossentropy", optimizer="adam", metrics=["accuracy"])
+    from sklearn.metrics import confusion_matrix
 
-# Initialize weights with word2vec
-if model_type == "CNN-non-static":
-    weights = np.array([v for v in embedding_weights.values()])
-    print("Initializing embedding layer with word2vec weights, shape", weights.shape)
-    embedding_layer = model.get_layer("embedding")
-    embedding_layer.set_weights([weights])
-
-# Train the model
-model.fit(x_train, y_train, batch_size=batch_size, epochs=num_epochs,
-          validation_data=(x_test, y_test), verbose=2)
+    y_true = y_test
+    print(confusion_matrix(y_true, y_pred))
