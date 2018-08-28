@@ -22,13 +22,13 @@ reviews_df['Rating'].value_counts()
 reviews_df['Review_Tidy'] = reviews_df['Review Text'].str.replace("[^a-zA-Z#]", " ")
 
 # Stop Words Removal
-from nltk.corpus import stopwords
-
-stop = stopwords.words('english')
-
-# Code from https://www.kaggle.com/pjoshi15/so-many-outfits-so-little-time-word2vec
-reviews_df['Review_Tidy'] = reviews_df['Review_Tidy'].apply(
-    lambda x: ' '.join([word for word in x.split() if word not in (stop)]))
+# from nltk.corpus import stopwords
+#
+# stop = stopwords.words('english')
+#
+# # Code from https://www.kaggle.com/pjoshi15/so-many-outfits-so-little-time-word2vec
+# reviews_df['Review_Tidy'] = reviews_df['Review_Tidy'].apply(
+#     lambda x: ' '.join([word for word in x.split() if word not in (stop)]))
 
 # Combining title and review
 reviews_df["Review_Tidy"] = reviews_df["Title"].map(str) + " " + reviews_df["Review_Tidy"]
@@ -56,13 +56,13 @@ print("Converting words to lowercase...")
 reviews_df['Review_Tidy'] = reviews_df['Review_Tidy'].str.lower()
 
 # Fix misspelled Words
-print("Fixing misspelled words")
-from spellchecker import SpellChecker
-spell = SpellChecker()
-# https://github.com/barrust/pyspellchecker
-for review in reviews_df['Review_Tidy']:
-    for word in review:
-        word = spell.correction(word)
+# print("Fixing misspelled words")
+# from spellchecker import SpellChecker
+# spell = SpellChecker()
+# # https://github.com/barrust/pyspellchecker
+# for review in reviews_df['Review_Tidy']:
+#     for word in review:
+#         word = spell.correction(word)
 
 print(reviews_df.head())
 pos_reviews = []

@@ -86,7 +86,7 @@ def load_data(data_source):
         shuffle_indices = np.random.permutation(np.arange(len(y)))
         x = x[shuffle_indices]
         y = y[shuffle_indices]
-        train_len = int(len(x) * 0.9)
+        train_len = int(len(x) * 0.95)
         x_train = x[:train_len]
         y_train = y[:train_len]
         x_test = x[train_len:]
@@ -100,7 +100,7 @@ def perform_grid_search(x_train, y_train, x_test, y_test, vocabulary_inv):
     old_stdout = sys.stdout
 
     from datetime import datetime
-    log_file = open("grid_search" + datetime.now() + ".log", "w")
+    log_file = open("grid_search" + model_name_s + ".log", "w")
 
     sys.stdout = log_file
     global model, batch_size
@@ -118,10 +118,10 @@ def perform_grid_search(x_train, y_train, x_test, y_test, vocabulary_inv):
                             hidden_dims=hidden_dims)
     # define the grid search parameters
     batch_size = [10, 20, 30]
-    epochs = [30, 50, ]
-    optimizer = ['RMSprop', 'Adagrad', 'Adam', 'Adamax']
+    epochs = [30, 50]
+    optimizer = ['SGD', 'Adagrad', 'Adam', 'Adamax']
     param_grid = dict(batch_size=batch_size, epochs=epochs, optimizer=optimizer)
-    grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=2, verbose=10)
+    grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=1, verbose=10)
     # grid = GridSearch(model=model,num_threads=1)
     grid_result = grid.fit(x_train, y_train)
     print(grid_result)
