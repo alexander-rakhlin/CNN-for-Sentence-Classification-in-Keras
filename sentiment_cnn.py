@@ -114,12 +114,8 @@ def perform_grid_search(x_train, y_train, x_test, y_test, vocabulary_inv):
     batch_size = [10]
     epochs = [10, 15, 20, 25, 30, 35]
     optimizer = ['Adamax']
-    # batch_size = [10, 20]
-    # epochs = [50, 75, 100]
-    # optimizer = ['Adagrad', 'Adam', 'Adamax']
     param_grid = dict(batch_size=batch_size, epochs=epochs, optimizer=optimizer)
     grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=1, verbose=10)
-    # grid = GridSearch(model=model,num_threads=1)
     grid_result = grid.fit(x_train, y_train)
     print(grid_result)
     print('Test Score for Optimized Parameters:', grid.score(x_test, y_test))
