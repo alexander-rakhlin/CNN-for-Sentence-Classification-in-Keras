@@ -35,9 +35,9 @@ def load_data_and_labels():
     Returns split sentences and labels.
     """
     # Load data from files
-    positive_examples = list(open("./data/stop_words_lem_rep_pos_reviews.pos").readlines())
+    positive_examples = list(open("./data/stop_add_lem_spell_pos_reviews.pos").readlines())
     positive_examples = [s.strip() for s in positive_examples]
-    negative_examples = list(open("./data/stop_words_lem_rep_neg_reviews.neg").readlines())
+    negative_examples = list(open("./data/stop_add_lem_spell_neg_reviews.neg").readlines())
     negative_examples = [s.strip() for s in negative_examples]
     # Split by words
     x_text = positive_examples + negative_examples

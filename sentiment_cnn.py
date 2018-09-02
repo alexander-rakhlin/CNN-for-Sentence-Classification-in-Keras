@@ -20,77 +20,66 @@ Differences from original article:
 """
 
 import numpy as np
-from keras.datasets import imdb
-from keras.preprocessing import sequence
+
+np.random.seed(1234)
 from keras.wrappers.scikit_learn import KerasClassifier
 from sklearn.model_selection import GridSearchCV
 
 from TextCNN import create_model
-
-np.random.seed(0)
 
 # ---------------------- Parameters section -------------------
 #
 # Model type. See Kim Yoon's Convolutional Neural Networks for Sentence Classification, Section 3
 model_type = "CNN-non-static"  # CNN-rand|CNN-non-static|CNN-static
 
-# Data source
-data_source = "keras_data_set"  # keras_data_set|local_dir
-
 # Model Hyperparameters
 embedding_dim = 50
-filter_sizes = (3, 8)
-num_filters = 10
-dropout_prob = (0.5, 0.8)
+filter_sizes = (3, 8, 12, 2)
+num_filters = 25
+dropout_prob = (0.5, 0.9)
 hidden_dims = 50
 
 # Training parameters
 batch_size = 10
-num_epochs = 50
+num_epochs = 40
 
-# Prepossessing parameters
+# Preproceessing parameters
 sequence_length = 100
 max_words = 5000
 
 # Word2Vec parameters (see train_word2vec)
-min_word_count = 1
-context = 10
+min_word_count = 10
+context = 5
 
-model_name_s = 'CNN-Better-Data'
+model_name_s = 'CNN-'
 model_load = False
 grid_search = True
-
 
 # ---------------------- Parameters end -----------------------
 
 
-def load_data(data_source):
-    assert data_source in ["keras_data_set", "local_dir"], "Unknown data source"
-    if data_source == "keras_data_set":
-        (x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=max_words, start_char=None,
-                                                              oov_char=None, index_from=None)
+def plot_model(model, filename='model.png'):
+    from keras.utils import plot_model
+    plot_model(model, to_file=filename)
 
-        x_train = sequence.pad_sequences(x_train, maxlen=sequence_length, padding="post", truncating="post")
-        x_test = sequence.pad_sequences(x_test, maxlen=sequence_length, padding="post", truncating="post")
 
-        vocabulary = imdb.get_word_index()
-        vocabulary_inv = dict((v, k) for k, v in vocabulary.items())
-        vocabulary_inv[0] = "<PAD/>"
-    else:
-        from data_helpers import load_data
-        x, y, vocabulary, vocabulary_inv_list = load_data()
-        vocabulary_inv = {key: value for key, value in enumerate(vocabulary_inv_list)}
-        y = y.argmax(axis=1)
 
-        # Shuffle data
-        shuffle_indices = np.random.permutation(np.arange(len(y)))
-        x = x[shuffle_indices]
-        y = y[shuffle_indices]
-        train_len = int(len(x) * 0.95)
-        x_train = x[:train_len]
-        y_train = y[:train_len]
-        x_test = x[train_len:]
-        y_test = y[train_len:]
+def load_data():
+    from data_helpers import load_data
+    x, y, vocabulary, vocabulary_inv_list = load_data()
+    vocabulary_inv = {key: value for key, value in enumerate(vocabulary_inv_list)}
+    y = y.argmax(axis=1)
+
+    # Shuffle data
+    shuffle_indices = np.random.permutation(np.arange(len(y)))
+    x = x[shuffle_indices]
+    y = y[shuffle_indices]
+    train_len = int(len(x) * 0.95)
+    print("Train Length:", train_len)
+    x_train = x[:train_len]
+    y_train = y[:train_len]
+    x_test = x[train_len:]
+    y_test = y[train_len:]
 
     return x_train, y_train, x_test, y_test, vocabulary_inv
 
@@ -99,7 +88,6 @@ def perform_grid_search(x_train, y_train, x_test, y_test, vocabulary_inv):
     import sys
     old_stdout = sys.stdout
 
-    from datetime import datetime
     log_file = open("grid_search" + model_name_s + ".log", "w")
 
     sys.stdout = log_file
@@ -117,9 +105,12 @@ def perform_grid_search(x_train, y_train, x_test, y_test, vocabulary_inv):
                             num_filters=num_filters,
                             hidden_dims=hidden_dims)
     # define the grid search parameters
-    batch_size = [10, 20, 30]
-    epochs = [30, 50]
-    optimizer = ['SGD', 'Adagrad', 'Adam', 'Adamax']
+    batch_size = [10]
+    epochs = [10, 15, 20, 25, 30, 35]
+    optimizer = ['Adamax']
+    # batch_size = [10, 20]
+    # epochs = [50, 75, 100]
+    # optimizer = ['Adagrad', 'Adam', 'Adamax']
     param_grid = dict(batch_size=batch_size, epochs=epochs, optimizer=optimizer)
     grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=1, verbose=10)
     # grid = GridSearch(model=model,num_threads=1)
@@ -141,7 +132,7 @@ def perform_grid_search(x_train, y_train, x_test, y_test, vocabulary_inv):
 if __name__ == '__main__':
     # Data Preparation
     print("Load data...")
-    x_train, y_train, x_test, y_test, vocabulary_inv = load_data(data_source)
+    x_train, y_train, x_test, y_test, vocabulary_inv = load_data()
 
     if sequence_length != x_test.shape[1]:
         print("Adjusting sequence length for actual size")
@@ -173,19 +164,12 @@ if __name__ == '__main__':
                                 vocabulary_inv=vocabulary_inv)
         else:
             print("Training Model...")
-            model.fit(x_train, y_train, batch_size=batch_size, epochs=num_epochs,
-                      validation_data=(x_test, y_test), verbose=10)
+            model.fit(x_train, y_train, batch_size=batch_size,
+                      epochs=num_epochs, shuffle=True, verbose=2)
+            model.save(model_name_s)
 
-    predictions = model.predict(x_test)
-    i = 0
-    y_pred = []
-    for prediction in predictions:
-        if prediction[0] >= 0.75:
-            y_pred.append(1)
-        else:
-            y_pred.append(0)
-
-    from sklearn.metrics import confusion_matrix
-
-    y_true = y_test
-    print(confusion_matrix(y_true, y_pred))
+            score, acc = model.evaluate(x_test, y_test,
+                                        batch_size=batch_size)
+            print('Test score:', score)
+            print('Test accuracy:', acc)
+            plot_model(model)

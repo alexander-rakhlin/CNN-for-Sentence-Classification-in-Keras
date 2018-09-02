@@ -5,7 +5,7 @@ from keras.layers import Embedding, Dropout, Convolution1D, MaxPooling1D, Flatte
 from w2v import train_word2vec
 
 
-def create_model(x_train, x_test, vocabulary_inv, model_type, embedding_dim, min_word_count,context, sequence_length, dropout_prob,filter_sizes,num_filters,hidden_dims,optimizer="adam"):
+def create_model(x_train, x_test, vocabulary_inv, model_type, embedding_dim, min_word_count,context, sequence_length, dropout_prob,filter_sizes,num_filters,hidden_dims,optimizer="Adagrad"):
     # Prepare embedding layer weights and convert inputs for static model
     print("Model type is", model_type)
     if model_type in ["CNN-non-static", "CNN-static"]:
