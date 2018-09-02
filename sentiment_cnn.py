@@ -18,6 +18,7 @@ Differences from original article:
 - random initialization is no worse than word2vec init on IMDB corpus
 - sliding Max Pooling instead of original Global Pooling
 """
+import os
 
 import numpy as np
 
@@ -41,7 +42,7 @@ hidden_dims = 50
 
 # Training parameters
 batch_size = 10
-num_epochs = 40
+num_epochs = 25
 
 # Preproceessing parameters
 sequence_length = 100
@@ -51,16 +52,21 @@ max_words = 5000
 min_word_count = 10
 context = 5
 
-model_name_s = 'CNN-'
-model_load = False
-grid_search = True
+model_name_s = 'CNN-Adamax-Final'
+model_load = True
+grid_search = False
 
 # ---------------------- Parameters end -----------------------
 
 
 def plot_model(model, filename='model.png'):
     from keras.utils import plot_model
-    plot_model(model, to_file=filename)
+    plot_model(model, to_file=filename,
+               show_layer_names=True,
+               show_shapes=True)
+
+    from keras_sequential_ascii import keras2ascii
+    print(keras2ascii(model))
 
 
 
@@ -74,7 +80,7 @@ def load_data():
     shuffle_indices = np.random.permutation(np.arange(len(y)))
     x = x[shuffle_indices]
     y = y[shuffle_indices]
-    train_len = int(len(x) * 0.95)
+    train_len = int(len(x) * 0.80)
     print("Train Length:", train_len)
     x_train = x[:train_len]
     y_train = y[:train_len]
@@ -130,6 +136,8 @@ def perform_grid_search(x_train, y_train, x_test, y_test, vocabulary_inv):
 
 
 if __name__ == '__main__':
+    os.environ["PATH"] += os.pathsep + 'C:/Program Files (x86)/Graphviz2.38/bin/'
+
     # Data Preparation
     print("Load data...")
     x_train, y_train, x_test, y_test, vocabulary_inv = load_data()
@@ -168,8 +176,9 @@ if __name__ == '__main__':
                       epochs=num_epochs, shuffle=True, verbose=2)
             model.save(model_name_s)
 
-            score, acc = model.evaluate(x_test, y_test,
-                                        batch_size=batch_size)
-            print('Test score:', score)
-            print('Test accuracy:', acc)
-            plot_model(model)
+    score, acc = model.evaluate(x_test, y_test,
+                                batch_size=batch_size)
+    print(model.summary())
+    print('Test score:', score)
+    print('Test accuracy:', acc)
+    plot_model(model)

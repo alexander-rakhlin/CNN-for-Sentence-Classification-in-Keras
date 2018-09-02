@@ -1,6 +1,6 @@
 import pandas as pd
 
-data_name = "test_set"
+data_name = "final_data"
 
 # read the data
 reviews_df = pd.read_csv('../data/clothing_review.csv')
@@ -8,7 +8,7 @@ reviews_df = pd.read_csv('../data/clothing_review.csv')
 # Remove last 500 Rows  and save as test set
 # reviews_df.tail(500).to_csv('test_set.csv')
 # reviews_df.drop(reviews_df.tail(500).index, inplace=True)  # drop last n rows
-reviews_df = reviews_df.tail(500)  # test set
+# reviews_df = reviews_df.tail(500)  # test set
 
 # Let's check out the missing values
 reviews_df.isnull().sum()  # Let's check out the missing values
