@@ -4,7 +4,7 @@ Train convolutional network for sentiment analysis on IMDB corpus. Based on
 http://arxiv.org/pdf/1408.5882v2.pdf
 
 For "CNN-rand" and "CNN-non-static" gets to 88-90%, and "CNN-static" - 85% after 2-5 epochs with following settings:
-embedding_dim = 50          
+embedding_dim = 50
 filter_sizes = (3, 8)
 num_filters = 10
 dropout_prob = (0.5, 0.8)
@@ -61,21 +61,47 @@ context = 10
 # ---------------------- Parameters end -----------------------
 
 
-def load_data(data_source):
+def load_data(data_source: str):
+    """
+     Loading data from keras.datasets.imdb or local text ./data/rt-polarity.pos
+     and ./data/rt-polarity.neg.
+
+    Parameters
+    ----------
+    data_source : str
+        select dataset. 'keras_data_set' or 'local_dir'.
+
+    Returns
+    -------
+    [x_train, y_train, x_test, y_test, vocabulary_inv]
+
+    x_train, y_train, x_test, y_test : numpy.ndarray
+
+    vocabulary_inv : dict {int:str}
+        mapping from frequency index number to word string.
+    """
     assert data_source in ["keras_data_set", "local_dir"], "Unknown data source"
+
     if data_source == "keras_data_set":
         (x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=max_words, start_char=None,
                                                               oov_char=None, index_from=None)
 
-        x_train = sequence.pad_sequences(x_train, maxlen=sequence_length, padding="post", truncating="post")
-        x_test = sequence.pad_sequences(x_test, maxlen=sequence_length, padding="post", truncating="post")
+        x_train = sequence.pad_sequences(x_train, maxlen=sequence_length,
+                                         padding="post", truncating="post")
+
+        x_test = sequence.pad_sequences(x_test, maxlen=sequence_length,
+                                        padding="post", truncating="post")
 
         vocabulary = imdb.get_word_index()
         vocabulary_inv = dict((v, k) for k, v in vocabulary.items())
         vocabulary_inv[0] = "<PAD/>"
+
     else:
+        # load data from local text file.
         x, y, vocabulary, vocabulary_inv_list = data_helpers.load_data()
-        vocabulary_inv = {key: value for key, value in enumerate(vocabulary_inv_list)}
+
+        vocabulary_inv = {idx: value for idx, value in enumerate(vocabulary_inv_list)}
+
         y = y.argmax(axis=1)
 
         # Shuffle data
