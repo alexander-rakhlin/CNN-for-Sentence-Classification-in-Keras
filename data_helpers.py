@@ -41,10 +41,23 @@ def clean_str(string: str) -> str:
     return string.strip().lower()
 
 
-def load_data_and_labels() -> list:
+def load_data_and_labels(path_pos="./data/rt-polarity.pos",
+                         path_neg="./data/rt-polarity.neg",
+                         encoding="utf-8") -> list:
     """
     Loads MR polarity data from files, splits the data into words and generates labels.
     Returns split sentences and labels.
+
+    Parameters
+    ----------
+    path_pos (optional) : str
+        path to text file
+
+    path_pos (optional) : str
+        path to text file
+
+    encoding (optional) : str
+        default is 'utf-8'
 
     Returns
     -------
@@ -59,9 +72,15 @@ def load_data_and_labels() -> list:
         y would be [[0, 1], [1, 0], [0, 1], [1, 0]]
     """
     # Load data from files
-    positive_examples = list(open("./data/rt-polarity.pos").readlines())
+    with open(path_pos, encoding=encoding) as f:
+        positive_examples = [s.strip() for s in f.readlines()]
+
+    with open(path_neg, encoding=encoding) as f:
+        negative_examples = [s.strip() for s in f.readlines()]
+
+    positive_examples = list(open(path_pos).readlines())
     positive_examples = [s.strip() for s in positive_examples]
-    negative_examples = list(open("./data/rt-polarity.neg").readlines())
+    negative_examples = list(open(path_neg).readlines())
     negative_examples = [s.strip() for s in negative_examples]
     # Split by words
     x_text = positive_examples + negative_examples
