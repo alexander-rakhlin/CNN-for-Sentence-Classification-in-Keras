@@ -78,19 +78,19 @@ def load_data_and_labels(path_pos="./data/rt-polarity.pos",
     with open(path_neg, encoding=encoding) as f:
         negative_examples = [s.strip() for s in f.readlines()]
 
-    positive_examples = list(open(path_pos).readlines())
-    positive_examples = [s.strip() for s in positive_examples]
-    negative_examples = list(open(path_neg).readlines())
-    negative_examples = [s.strip() for s in negative_examples]
     # Split by words
     x_text = positive_examples + negative_examples
+    # text cleaning
     x_text = [clean_str(sent) for sent in x_text]
     # Tokenization
     x_text = [s.split(" ") for s in x_text]
     # Generate labels
-    positive_labels = [[0, 1] for _ in positive_examples]
-    negative_labels = [[1, 0] for _ in negative_examples]
+    positive_labels = [[0, 1]] * len(positive_examples)
+    negative_labels = [[1, 0]] * len(negative_examples)
+
+    # data order pos -> neg
     y = np.concatenate([positive_labels, negative_labels], 0)
+
     return [x_text, y]
 
 
