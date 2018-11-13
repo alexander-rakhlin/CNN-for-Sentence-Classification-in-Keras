@@ -5,7 +5,7 @@ import os
 import numpy as np
 
 
-def train_word2vec(sentence_matrix: , vocabulary_inv,
+def train_word2vec(sentence_matrix, vocabulary_inv,
                    num_features=300, min_word_count=1, context=10) -> dict:
     """
     Trains, saves, loads Word2Vec model

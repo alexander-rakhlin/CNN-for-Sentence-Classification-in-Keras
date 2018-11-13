@@ -222,7 +222,7 @@ def load_data() -> list:
     return [x, y, vocabulary, vocabulary_inv]
 
 
-def batch_iter(data: list, batch_size: int, num_epochs: int) -> iterator:
+def batch_iter(data: list, batch_size: int, num_epochs: int) -> list:
     """
     Generates a batch iterator for a dataset.
 
@@ -233,7 +233,7 @@ def batch_iter(data: list, batch_size: int, num_epochs: int) -> iterator:
     num_epochs : int
     Returns
     -------
-    shuffled_data : iterator
+    shuffled_data : list(iterator)
 
     """
     data = np.array(data)

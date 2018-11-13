@@ -36,7 +36,7 @@ np.random.seed(0)
 model_type = "CNN-non-static"  # CNN-rand|CNN-non-static|CNN-static
 
 # Data source
-data_source = "keras_data_set"  # keras_data_set|local_dir
+data_source = "local_dir"  # keras_data_set|local_dir
 
 # Model Hyperparameters
 embedding_dim = 50
